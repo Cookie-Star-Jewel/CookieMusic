@@ -1,0 +1,550 @@
+/* ==========================================================================
+   player.css — 音乐播放器外壳（路由 /player）
+   视觉语言完全沿用 karlgonsalves 克隆：黄底 + Changa One + 3D 隧道。
+   隧道几何复用 karlgonsalves.css（根节点同时挂 .karl-site 与 .player-site），
+   这里只加播放器自己的东西：三块全屏层、歌词环、播放控制条、列表。
+   ========================================================================== */
+
+.player-site {
+  height: 100vh;
+  overflow: hidden;
+  background-color: #ffe100;
+}
+
+/* 原站这两处 preserve-3d 是 IX2 运行时时写上去的，克隆里同样。
+   播放器没挂那套引擎，所以必须显式声明 —— 少了它，环上的槽会被压平到环平面，
+   相邻歌词会跑到屏幕左右两侧而不是上下依次转进来。 */
+.player-site .camera {
+  transform: scale(0.875);
+  transform-style: preserve-3d;
+}
+
+.player-site .pages.rotate.axis {
+  transform-style: preserve-3d;
+}
+
+/* 歌词环的圆心比原站文字牌低一档：原站的环心落在 100vw 高的轴的几何中心，
+   对歌词来说太靠下了 —— 抬高之后「当前句」才能落在蓝圆上方的空档里。 */
+.player-site .pages.tilt.axis {
+  top: 0;
+}
+
+/* ---------- 舞台与三块全屏层 ---------- */
+
+.player-stage {
+  position: absolute;
+  inset: 0;
+  perspective: 140vw;
+  perspective-origin: 50% 45%;
+  transform-style: preserve-3d;
+}
+
+.player-panel {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition:
+    transform 620ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 380ms ease;
+  will-change: transform, opacity;
+}
+
+.player-panel[data-state="off-left"] {
+  transform: translate3d(-38vw, 0, -55vw) rotateY(30deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.player-panel[data-state="off-right"] {
+  transform: translate3d(38vw, 0, -55vw) rotateY(-30deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.player-panel[data-state="active"] {
+  transform: none;
+  opacity: 1;
+}
+
+/* ---------- 顶部导航（沿用原站 menu_button 尺寸与高亮缩放） ---------- */
+
+.player-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  width: 100vw;
+  justify-content: center;
+  align-items: center;
+}
+
+.player-nav .menu_button {
+  font-family: var(--font-lyric);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 380ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.player-nav .menu_button[data-active="true"] {
+  transform: scale(1.5);
+}
+
+.player-nav .menu_button[data-active="true"]:hover {
+  color: #333;
+}
+
+/* ---------- 正在播放：歌词隧道 ---------- */
+
+.player-tunnel {
+  position: absolute;
+  inset: 0;
+}
+
+.lyric-slot {
+  position: absolute;
+  left: -45vw;
+  /* top + height/2 - 50vw 就是这个槽到环心的距离（半径 ≈ 540px @1440）。 */
+  top: -2.5vw;
+  width: 90vw;
+  height: 30vw;
+  margin-left: 50vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.16em;
+  transform-style: preserve-3d;
+  text-align: center;
+}
+
+.lyric-line {
+  font-family: var(--font-lyric);
+  font-weight: 900;
+  color: #fff;
+  /* --units is the line's width in "em": CJK counts 1, latin counts 0.56.
+     Long lines therefore shrink instead of overflowing — no JS measuring. */
+  font-size: clamp(26px, calc(80vw / var(--units, 8)), 104px);
+  line-height: 1.16;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-shadow: 0 0.06em 0 rgba(0, 0, 0, 0.08);
+}
+
+.lyric-translation {
+  font-family: var(--font-lyric);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.36em;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.lyric-placeholder {
+  font-family: var(--font-changa-one), Impact, sans-serif;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 56px;
+  line-height: 1.1;
+  text-align: center;
+}
+
+/* ---------- 正在播放：滚动轨道 + 控制条 ---------- */
+
+.now-scroller {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.now-scroller::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.now-track-spacer {
+  width: 100%;
+  pointer-events: none;
+}
+
+.player-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 26px 16px;
+  background-color: rgba(255, 225, 0, 0.86);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(51, 51, 51, 0.16);
+}
+
+.player-now {
+  min-width: 0;
+  flex: 1;
+}
+
+.player-now-title {
+  font-family: var(--font-lyric);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.25;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-now-meta {
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(51, 51, 51, 0.62);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 9px 18px;
+  background-color: rgba(51, 51, 51, 0.1);
+  color: #333;
+  font-family: var(--font-lyric);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.player-btn:hover {
+  background-color: rgba(51, 51, 51, 0.18);
+}
+
+.player-btn.primary {
+  padding: 9px 30px;
+  background-color: #007fff;
+  color: #fff;
+}
+
+.player-btn.primary:hover {
+  background-color: #0068d1;
+}
+
+.player-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.player-bar-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.player-clock {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: #333;
+}
+
+.player-hint {
+  font-size: 11px;
+  color: rgba(51, 51, 51, 0.55);
+  white-space: nowrap;
+}
+
+.player-progress {
+  width: 190px;
+  height: 4px;
+  border-radius: 999px;
+  background-color: rgba(51, 51, 51, 0.18);
+  overflow: hidden;
+}
+
+.player-progress-fill {
+  height: 100%;
+  background-color: #007fff;
+  border-radius: 999px;
+}
+
+/* ---------- 列表类板块（搜索 / 播放列表） ---------- */
+
+.player-sheet {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 88px 6vw 28px;
+  gap: 16px;
+}
+
+.player-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+}
+
+.player-title {
+  font-family: var(--font-changa-one), Impact, sans-serif;
+  font-size: 46px;
+  line-height: 1;
+  color: #333;
+  margin: 0;
+}
+
+.player-sub {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(51, 51, 51, 0.66);
+  margin: 0 0 4px;
+}
+
+.player-search {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  padding: 0 18px;
+  border: 1px solid rgba(51, 51, 51, 0.22);
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.55);
+  color: #333;
+  font-family: var(--font-lyric);
+  font-size: 15px;
+  outline: none;
+}
+
+.player-search:focus {
+  border-color: #007fff;
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.player-rows {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 16px;
+  background-color: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(51, 51, 51, 0.14);
+  scrollbar-width: thin;
+}
+
+.player-group {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 9px 18px;
+  background-color: rgba(255, 225, 0, 0.94);
+  border-bottom: 1px solid rgba(51, 51, 51, 0.1);
+  font-size: 12px;
+  color: rgba(51, 51, 51, 0.7);
+  letter-spacing: 0.04em;
+}
+
+.player-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 2.4fr) minmax(0, 1.4fr) 62px 92px 74px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 18px;
+  border: 0;
+  border-bottom: 1px solid rgba(51, 51, 51, 0.08);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-lyric);
+  font-size: 14px;
+  color: #333;
+}
+
+.player-row:hover {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.player-row[data-current="true"] {
+  background-color: rgba(0, 127, 255, 0.14);
+}
+
+.player-row-idx {
+  font-variant-numeric: tabular-nums;
+  color: rgba(51, 51, 51, 0.45);
+  font-size: 12px;
+}
+
+.player-row-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-row-sub {
+  color: rgba(51, 51, 51, 0.64);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-tag {
+  justify-self: start;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1.6;
+  background-color: rgba(51, 51, 51, 0.1);
+  color: rgba(51, 51, 51, 0.72);
+}
+
+.player-tag.on {
+  background-color: rgba(0, 127, 255, 0.2);
+  color: #00539b;
+}
+
+.player-empty {
+  padding: 46px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: rgba(51, 51, 51, 0.6);
+}
+
+.player-foot-note {
+  font-size: 12px;
+  line-height: 1.7;
+  color: rgba(51, 51, 51, 0.6);
+}
+
+/* ---------- 本地 / 在线 切换 ---------- */
+
+.player-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background-color: rgba(51, 51, 51, 0.1);
+}
+
+.player-tabs button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 18px;
+  background: transparent;
+  color: rgba(51, 51, 51, 0.7);
+  font-family: var(--font-lyric);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.player-tabs button[data-on="true"] {
+  background-color: #007fff;
+  color: #fff;
+  font-weight: 700;
+}
+
+.player-quality {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background-color: rgba(51, 51, 51, 0.1);
+}
+
+.player-quality button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: transparent;
+  color: rgba(51, 51, 51, 0.7);
+  font-family: var(--font-lyric);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.player-quality button[data-on="true"] {
+  background-color: rgba(51, 51, 51, 0.82);
+  color: #fff;
+}
+
+.player-row-static {
+  cursor: default;
+}
+
+.player-row-static:hover {
+  background-color: transparent;
+}
+
+.player-row-action {
+  justify-self: end;
+}
+
+.player-hires {
+  color: #00539b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.player-row-note {
+  grid-column: 2 / -1;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(51, 51, 51, 0.6);
+}
+
+/* ---------- 窄屏适配 ---------- */
+
+@media screen and (max-width: 991px) {
+  .lyric-line {
+    white-space: normal;
+  }
+
+  .player-title {
+    font-size: 34px;
+  }
+
+  .player-sheet {
+    padding: 76px 4vw 22px;
+  }
+
+  .player-progress {
+    width: 120px;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .player-row {
+    grid-template-columns: 28px minmax(0, 2fr) 78px;
+  }
+
+  .player-row-sub,
+  .player-row .player-col-hide {
+    display: none;
+  }
+
+  .player-bar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .player-bar-right {
+    align-items: flex-start;
+    flex-basis: 100%;
+  }
+}

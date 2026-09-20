@@ -1,0 +1,1393 @@
+/* ============================================================
+ * animal-island-ui 风格层
+ * （Drawer / Table / Pagination / 播放列表 / 正在播放 / 右下角 FAB）
+ * 设计 token：薄荷青绿 #19c8b9、大地棕 #725d42、奶油米白 rgb(247,243,223)、
+ * Nunito + Noto Sans SC、pill 圆角、`0 Npx 0 0` 立体阴影、focus 黄 #ffcc00。
+ * ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+.animal-ui {
+  --ai-primary: #19c8b9;
+  --ai-primary-active: #11a89b;
+  --ai-primary-bg: #e6f9f6;
+  --ai-text: #725d42;
+  --ai-text-secondary: #9f927d;
+  --ai-text-muted: #8a7b66;
+  --ai-text-disabled: #c4b89e;
+  --ai-bg: rgb(247, 243, 223);
+  --ai-bg-secondary: #f0e8d8;
+  --ai-focus: #ffcc00;
+  --ai-font: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+/* ---------- Drawer：遮罩 + 面板 ---------- */
+.animal-drawer-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.36s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.animal-drawer-mask-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.animal-drawer-panel {
+  position: fixed;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  background: rgb(247, 243, 223);
+  color: rgb(128, 115, 89);
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  visibility: hidden;
+  transition: transform 0.36s cubic-bezier(0.2, 0, 0.2, 1), visibility 0s 0.36s;
+}
+
+.animal-drawer-top {
+  top: 0;
+  left: 0;
+  right: 0;
+  max-height: calc(100vh - 32px);
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 12px 32px rgba(61, 52, 40, 0.18);
+  transform: translateY(-100%);
+}
+
+.animal-drawer-right {
+  top: 0;
+  right: 0;
+  height: 100vh;
+  max-width: calc(100vw - 32px);
+  border-radius: 20px 0 0 20px;
+  box-shadow: -12px 0 32px rgba(61, 52, 40, 0.18);
+  transform: translateX(100%);
+}
+
+.animal-drawer-bottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: calc(100vh - 32px);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -12px 32px rgba(61, 52, 40, 0.18);
+  transform: translateY(100%);
+}
+
+.animal-drawer-left {
+  top: 0;
+  left: 0;
+  height: 100vh;
+  max-width: calc(100vw - 32px);
+  border-radius: 0 20px 20px 0;
+  box-shadow: 12px 0 32px rgba(61, 52, 40, 0.18);
+  transform: translateX(-100%);
+}
+
+.animal-drawer-panel.animal-drawer-open {
+  visibility: visible;
+  transform: none;
+  transition: transform 0.36s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.animal-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 15px;
+}
+
+.animal-drawer-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: rgba(114, 93, 66, 1);
+  letter-spacing: 0.02em;
+}
+
+.animal-drawer-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #725d42;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.animal-drawer-close:hover {
+  background: rgba(114, 93, 66, 0.1);
+}
+
+.animal-drawer-close svg {
+  width: 15px;
+  height: 15px;
+}
+
+.animal-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 24px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #8a7b66;
+}
+
+.animal-drawer-footer {
+  padding: 12px 24px 20px;
+}
+
+/* 背景"推远"景深（对 body 直接子元素施加） */
+.animal-drawer-pushed {
+  transform: scale(0.94) !important;
+  filter: blur(1px);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: transform 0.36s cubic-bezier(0.2, 0, 0.2, 1), filter 0.36s ease, border-radius 0.36s ease;
+}
+
+/* ---------- Table ---------- */
+.animal-table {
+  background: rgb(247, 243, 223);
+  border-radius: 20px;
+  padding: 6px;
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.animal-table table {
+  width: 100%;
+  border-collapse: collapse;
+  /* 列宽固定网格：长歌名只截断、不再把列挤偏，所有行严格对齐 */
+  table-layout: fixed;
+}
+
+.animal-table th {
+  padding: 16px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #725d42;
+  text-align: left;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.animal-table tbody tr {
+  transition: background-color 0.15s;
+}
+
+/* 行间虚线：必须画在 td 上 —— tr::before 会被表格布局当成匿名单元格，
+   把整行 td 顶后一格（首行对齐、后续行右移一列的元凶） */
+.animal-table tbody tr + tr td {
+  border-top: 2px dashed rgb(240, 232, 216);
+}
+
+.animal-table td {
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #725d42;
+  line-height: 1.6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.animal-table tbody tr:hover {
+  background-color: #d6f0ea;
+  border-radius: 30px;
+}
+
+.animal-table .animal-table-name {
+  font-weight: 700;
+}
+
+.animal-table .animal-table-op {
+  width: 1%;
+  text-align: center;
+}
+
+.animal-op-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+/* 圆形小图标按钮（表格里的下载等） */
+.animal-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #19c8b9;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.animal-icon-btn:hover {
+  background: #e6f9f6;
+  transform: translateY(-1px);
+}
+
+.animal-icon-btn:focus-visible {
+  outline: 2px solid #ffcc00;
+  outline-offset: 2px;
+}
+
+.animal-icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------- Pagination ---------- */
+.animal-pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 16px 8px;
+}
+
+.animal-pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.animal-pagination-total {
+  margin-right: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #a09080;
+}
+
+.animal-page-item {
+  display: grid;
+  place-items: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #725d42;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.animal-page-item:hover:not(:disabled):not(.active) {
+  background: #ffd54f;
+}
+
+.animal-page-item.active {
+  background: #ffc107;
+  color: #fff;
+  font-weight: 700;
+}
+
+.animal-page-item.active:hover {
+  background: #ffb400;
+}
+
+.animal-page-item:disabled {
+  color: #c4b89e;
+  cursor: default;
+}
+
+.animal-page-item:focus-visible {
+  outline: 2px solid #ffcc00;
+  outline-offset: 2px;
+}
+
+.animal-page-ellipsis {
+  width: 24px;
+  text-align: center;
+  color: #c4b89e;
+  font-size: 13px;
+  user-select: none;
+}
+
+/* 每页条数切换器（Select 风格触发器 + 向上弹层） */
+.animal-size-changer {
+  position: relative;
+  margin-left: 10px;
+}
+
+.animal-size-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: 2px solid #e8dcc8;
+  border-radius: 12px;
+  background: #fff;
+  color: #725d42;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.animal-size-trigger:hover {
+  border-color: #a89878;
+}
+
+.animal-size-trigger svg {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.15s;
+}
+
+.animal-size-trigger[data-open="true"] svg {
+  transform: rotate(180deg);
+}
+
+.animal-size-popover {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 100%;
+  padding: 6px;
+  background: #ffeea0;
+  border-radius: 28px;
+  box-shadow: 0 4px 12px rgba(61, 52, 40, 0.18);
+}
+
+.animal-size-option {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 28px;
+  background: transparent;
+  color: #725d42;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.animal-size-option:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.animal-size-option.current {
+  background: #ffc107;
+  color: #fff;
+}
+
+/* ---------- 播放列表（右侧抽屉） ---------- */
+.pl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pl-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 30px;
+  background: transparent;
+  text-align: left;
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.pl-row:hover {
+  background: #d6f0ea;
+}
+
+.pl-row.current {
+  background: #e6f9f6;
+}
+
+.pl-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 700;
+  color: #725d42;
+}
+
+.pl-artist {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9f927d;
+}
+
+.pl-meta {
+  flex-shrink: 0;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: #f0e8d8;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9f927d;
+}
+
+.pl-status {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c4b89e;
+}
+
+.pl-row.current .pl-status {
+  background: #19c8b9;
+}
+
+/* 行尾「＋」：把本地曲库歌加进我的歌单 */
+.pl-add {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #e6f9f6;
+  color: #11a89b;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.pl-add:hover {
+  background: #19c8b9;
+  color: #fff;
+}
+
+.pl-add svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pl-add:focus-visible {
+  outline: 2px solid #ffcc00;
+  outline-offset: 2px;
+}
+
+/* 行尾「✕」：从硬盘删除这首歌（hover 变红提示危险） */
+.pl-del {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #c9bda9;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.pl-del:hover {
+  background: #ffe3e0;
+  color: #d64541;
+}
+
+.pl-del:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.pl-del:focus-visible {
+  outline: 2px solid #ffcc00;
+}
+
+/* 曲库内搜索：过滤播放列表（贴 plst-new input 风格，紧凑版） */
+.pl-search {
+  position: relative;
+  margin: 0 10px 8px;
+}
+
+.pl-search input {
+  width: 100%;
+  height: 40px;
+  padding: 0 44px 0 18px;
+  border: 2px solid transparent;
+  border-radius: 50px;
+  background: #f0e8d8;
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #725d42;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.pl-search input:focus {
+  border-color: #ffcc00;
+  background: #fdfaf0;
+}
+
+.pl-search input::placeholder {
+  color: #c4b89e;
+  font-weight: 500;
+}
+
+.pl-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: #e8ddc3;
+  color: #8a7563;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.pl-search-clear:hover {
+  background: #ffcc00;
+  color: #4a3728;
+}
+
+/* 行内浮层容器（加歌歌单选择） */
+.plst-add-inline {
+  padding: 0 12px 6px;
+}
+
+.plst-add-inline .plst-add-pop {
+  border: 2px dashed #c4b89e;
+}
+
+.pl-empty {
+  padding: 24px 8px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #a09080;
+}
+
+.pl-empty button {
+  margin-top: 10px;
+}
+
+/* ---------- 正在播放（底部抽屉） ---------- */
+.np-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.np-current {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-radius: 30px;
+  background: #f0e8d8;
+}
+
+.np-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #c4b89e;
+}
+
+.np-dot[data-playing="true"] {
+  background: #19c8b9;
+  animation: animal-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes animal-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: 0.65; }
+}
+
+.np-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #725d42;
+}
+
+.np-artist {
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9f927d;
+}
+
+.np-state {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #19c8b9;
+}
+
+.np-import {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.np-hint {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #a09080;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+/* ---------- animal 按钮（file label / 操作按钮共用） ---------- */
+.animal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 45px;
+  padding: 0 20px;
+  border: 2px solid #f8f8f0;
+  border-radius: 50px;
+  background: #f8f8f0;
+  color: #794f27;
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 5px 0 0 #bdaea0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animal-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 0 0 #bdaea0;
+}
+
+.animal-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 #bdaea0;
+}
+
+.animal-btn:focus-visible {
+  outline: 2px solid #19c8b9;
+  outline-offset: 2px;
+}
+
+.animal-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.animal-btn-teal {
+  border-color: #19c8b9;
+  background: #19c8b9;
+  color: #fff;
+  box-shadow: 0 5px 0 0 #11a89b;
+}
+
+.animal-btn-teal:hover:not(:disabled) {
+  box-shadow: 0 6px 0 0 #11a89b;
+}
+
+.animal-btn-teal:active:not(:disabled) {
+  box-shadow: 0 1px 0 0 #11a89b;
+}
+
+/* ---------- 右下角 FAB（dock） ----------
+   基础圆形样式复用 karlgonsalves.css 的 .fab / .fab-item
+   （都在 .karl-site 作用域内），这里只负责定位与文字标签。 */
+.karl-site .dock-fab-wrap {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 999;
+}
+
+/* ---------- 搜索歌曲（顶部抽屉）：搜索行 + 音质切换 + 下载状态 ---------- */
+.animal-searchbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 14px 16px;
+}
+
+.animal-searchbar input {
+  flex: 1;
+  min-width: 180px;
+  height: 45px;
+  padding: 0 22px;
+  border: 2px solid transparent;
+  border-radius: 50px;
+  background: #f0e8d8;
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #725d42;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.animal-searchbar input:focus {
+  border-color: #ffcc00;
+  background: #fdfaf0;
+}
+
+.animal-searchbar input::placeholder {
+  color: #c4b89e;
+  font-weight: 500;
+}
+
+.animal-seg {
+  display: flex;
+  padding: 3px;
+  border-radius: 50px;
+  background: #f0e8d8;
+}
+
+.animal-seg button {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 50px;
+  background: transparent;
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #9f927d;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.animal-seg button[data-on="true"] {
+  background: #19c8b9;
+  color: #fff;
+  box-shadow: 0 2px 0 0 #11a89b;
+}
+
+.animal-seg button:focus-visible {
+  outline: 2px solid #ffcc00;
+  outline-offset: 2px;
+}
+
+.animal-table-empty {
+  padding: 30px 20px !important;
+  text-align: center;
+  font-weight: 600 !important;
+  color: #a09080 !important;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.animal-status-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: #f0e8d8;
+  font-size: 12px;
+  font-weight: 700;
+  color: #9f927d;
+  white-space: nowrap;
+}
+
+.animal-status-tag.on {
+  background: #e6f9f6;
+  color: #11a89b;
+}
+
+.animal-status-tag.err {
+  background: #fdeceb;
+  color: #d64545;
+}
+
+.animal-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------- 播放列表：工具条（曲目数 + 重新扫描） ---------- */
+.pl-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 16px 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #9f927d;
+}
+
+.animal-btn-sm {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 50px;
+  background: #19c8b9;
+  color: #fff;
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 3px 0 0 #11a89b;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animal-btn-sm:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 0 #11a89b;
+}
+
+.animal-btn-sm:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 0 #11a89b;
+}
+
+.animal-btn-sm:focus-visible {
+  outline: 2px solid #ffcc00;
+  outline-offset: 2px;
+}
+
+/* ---------- 搜索结果「加入歌单」行内浮层 ---------- */
+.animal-table tr.plst-add-row td {
+  padding: 0 20px 16px;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.plst-add-pop {
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: #f0e8d8;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plst-add-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.plst-pill {
+  padding: 7px 16px;
+  border: 0;
+  border-radius: 50px;
+  background: #e6f9f6;
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #11a89b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.plst-pill:hover {
+  background: #19c8b9;
+  color: #fff;
+}
+
+.plst-add-new {
+  display: flex;
+  gap: 8px;
+}
+
+.plst-add-new input {
+  flex: 1;
+  min-width: 120px;
+  height: 34px;
+  padding: 0 16px;
+  border: 2px solid transparent;
+  border-radius: 50px;
+  background: rgb(247, 243, 223);
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #725d42;
+  outline: none;
+}
+
+.plst-add-new input:focus {
+  border-color: #ffcc00;
+}
+
+.plst-tip {
+  font-size: 13px;
+  font-weight: 600;
+  color: #a09080;
+}
+
+.plst-tip.on {
+  color: #11a89b;
+}
+
+/* ---------- 我的歌单（右侧抽屉） ---------- */
+.plst-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plst-new {
+  display: flex;
+  gap: 8px;
+}
+
+.plst-new input {
+  flex: 1;
+  min-width: 0;
+  height: 45px;
+  padding: 0 22px;
+  border: 2px solid transparent;
+  border-radius: 50px;
+  background: #f0e8d8;
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #725d42;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.plst-new input:focus {
+  border-color: #ffcc00;
+  background: #fdfaf0;
+}
+
+.plst-new input::placeholder {
+  color: #c4b89e;
+  font-weight: 500;
+}
+
+/* 循环模式切换行：label + 三段 seg（列表/随机/单曲） */
+.plst-loop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 0;
+}
+
+.plst-loop-label {
+  flex: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: #9f927d;
+}
+
+.plst-loop .animal-seg {
+  flex: 1;
+  min-width: 0;
+  justify-content: space-between;
+}
+
+.plst-loop .animal-seg button {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.plst-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plst-card {
+  border-radius: 24px;
+  background: #f0e8d8;
+  overflow: hidden;
+}
+
+.plst-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.plst-head:hover {
+  background: #e8ddc9;
+}
+
+.plst-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 700;
+  color: #725d42;
+}
+
+.plst-count {
+  padding: 3px 12px;
+  border-radius: 12px;
+  background: rgb(247, 243, 223);
+  font-size: 12px;
+  font-weight: 700;
+  color: #9f927d;
+}
+
+.plst-del {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 12px;
+  color: #c4b89e;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.plst-del:hover {
+  background: #fdeceb;
+  color: #d64545;
+}
+
+.plst-songs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 10px 12px;
+}
+
+.plst-song {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 18px;
+  background: rgb(247, 243, 223);
+}
+
+.plst-play {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #e6f9f6;
+  font-size: 10px;
+  color: #11a89b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.plst-play:hover {
+  background: #19c8b9;
+  color: #fff;
+}
+
+.plst-play.on {
+  background: #19c8b9;
+  color: #fff;
+}
+
+.plst-state {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #11a89b;
+}
+
+.plst-song-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: #725d42;
+}
+
+.plst-song-artist {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #9f927d;
+}
+
+.plst-song-dur {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9f927d;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ================================================================
+   animal 风格悬停提示：data-tip 属性驱动，替代浏览器原生 title 黑框。
+   气泡出现在元素下方右对齐（行内小按钮都在行的右端，右对齐不出界），
+   悬停 0.25s 后淡入，避免扫过时闪烁。
+   ================================================================ */
+[data-tip] {
+  position: relative;
+}
+
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 999;
+  padding: 6px 12px;
+  border: 2px solid #4a3728;
+  border-radius: 8px;
+  background: #fffdf5;
+  color: #4a3728;
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 rgba(74, 55, 40, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-2px);
+  transition: opacity 0.15s ease 0.25s, transform 0.15s ease 0.25s;
+}
+
+[data-tip]:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 左对齐变体：歌名/歌手等行首文本的气泡，向右展开不出抽屉左缘 */
+[data-tip-pos="left"]::after {
+  right: auto;
+  left: 0;
+}
+
+/* 切歌转场：交叉淡化完成瞬间歌词面板快速淡隐再浮现（柔化歌词跳变） */
+.karl-site .text_lyric {
+  transition: opacity 0.3s ease;
+}
+
+.karl-site.switching .text_lyric {
+  opacity: 0.08;
+}
+
+/* 歌单卡头循环模式折叠面板（animal-island-ui Collapse）：
+   收起只显示当前模式名，展开在文档流内列出三个选项——绝不被遮挡 */
+.plst-loop-collapse {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: 6px;
+  max-width: 170px;
+}
+
+.plst-loop-current {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4a3728;
+  white-space: nowrap;
+}
+
+.plst-loop-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.plst-loop-opts button {
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 30px;
+  background: transparent;
+  color: #9f927d;
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.plst-loop-opts button[data-on="true"] {
+  background: #11a89b;
+  color: #fffdf5;
+}
+
+.plst-loop-opts button:hover:not([data-on="true"]) {
+  background: #f0e8d8;
+  color: #4a3728;
+}
+
+/* 歌单展开/收起的入场动画（丝滑淡入下滑） */
+@keyframes plst-songs-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.plst-songs {
+  animation: plst-songs-in 0.28s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.plst-song.current {
+  background: #e6f9f6;
+  box-shadow: inset 0 0 0 2px #11a89b;
+}
+
+.plst-song.current .plst-song-name {
+  color: #0b8a80;
+  font-weight: 800;
+}
+
+/* 歌单折叠面板（animal-island-ui Collapse 作歌单卡） */
+.plst-collapse {
+  margin-bottom: 14px;
+}
+
+.plst-collapse .plst-head-q {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.plst-collapse .plst-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #4a3728;
+}
+
+.plst-collapse .plst-count {
+  margin-left: auto;
+}
+
+.plst-collapse .plst-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 10px;
+  border-radius: 50%;
+  background: transparent;
+  color: #c9bda9;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.plst-collapse .plst-del:hover {
+  background: #ffe3e0;
+  color: #d64541;
+}
+
+/* 删除气泡改上方（卡片底部方向的下方气泡会被圆角裁剪） */
+[data-tip-pos="top"]::after {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+/* 受控轻量折叠：循环模式（grid rows 过渡，贴官方丝滑；默认收起） */
+.plst-loop-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 30px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.plst-loop-toggle:hover {
+  background: #f0e8d8;
+}
+
+.plst-loop-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #11a89b;
+  color: #fffdf5;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.plst-loop-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.plst-loop-panel.open {
+  grid-template-rows: 1fr;
+}
+
+.plst-loop-panel .plst-loop-opts {
+  overflow: hidden;
+  min-height: 0;
+}

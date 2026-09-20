@@ -1,0 +1,44 @@
+appId: io.github.Cookie-Star-Jewel.cookiemusic
+productName: CookieMusic
+
+# 直接用本地 npm electron 包的 dist（跳过 zip 下载解压——那条链路在受管
+# 环境有稳定复现的 unlink 竞态 EBUSY）
+electronDist: node_modules/electron/dist
+
+# extraResources 搬运 .next/standalone 时会剥掉 node_modules，pack 完成后由本钩子补拷
+afterPack: scripts/after-pack.cjs
+
+directories:
+  # 工作区内目录会被文件 watcher/索引器长期锁住（unlink EBUSY），移到工作区外
+  output: release/
+
+# 壳模式：asar 里只装 electron 壳代码；standalone server 通过 extraResources 携带
+files:
+  - electron/**/*
+  - package.json
+  - "!node_modules/**/*"
+
+extraResources:
+  - from: .next2/standalone
+    to: server
+  - from: .next2/static
+    to: server/.next/static
+  - from: public
+    to: server/public
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: CookieMusic
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
