@@ -19,9 +19,25 @@ files:
   - "!node_modules/**/*"
 
 extraResources:
-  - from: .next2/standalone
+  # 注意：.next3/standalone 在受管环境里不只是 Next 追踪产物——工作区里的
+  # 大目录（release/ 含旧安装包与 win-unpacked）也会被一起 trace 进去，
+  # 曾经的 0.4.23 安装包因此从 141MB 涨到 394MB。这里用 filter 兜底排除；
+  # 同时 next.config.ts 的 outputFileTracingExcludes 也在源头挡一道。
+  - from: .next3/standalone
     to: server
-  - from: .next2/static
+    filter:
+      - "**/*"
+      - "!release/**"
+      - "!.git/**"
+      - "!.next3/**"
+      - "!.next2/**"
+      - "!.workbuddy/**"
+      - "!docs/**"
+      - "!dist_electron/**"
+      - "!android-app/**"
+      - "!**/*.tsbuildinfo"
+      - "!**/*.log"
+  - from: .next3/static
     to: server/.next/static
   - from: public
     to: server/public

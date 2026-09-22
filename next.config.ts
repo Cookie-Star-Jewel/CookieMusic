@@ -8,13 +8,29 @@ import type { NextConfig } from "next";
  */
 const nextConfig: NextConfig = {
   output: "standalone",
-  distDir: ".next2",
+  // 又换了一次目录名：.next2 里被 trace 进过一份 release/（旧安装包 + win-unpacked），
+  // 那个 app.asar 被工作区 watcher 长期锁死（unlink EBUSY），连 next build 清理
+  // .next2/standalone 都做不到。换 .next3 绕开；下面的 outputFileTracingExcludes
+  // 已确保不会再把这个目录带进来。
+  distDir: ".next3",
   outputFileTracingExcludes: {
     "*": [
       "dist_electron/**",
       "android-app/**",
       "docs/**",
       ".next-old*/**",
+      // release/ 里是上一版安装包与 win-unpacked（几百 MB）：next build 在
+      // clean:release 之前运行，不排除的话整个旧包会被 trace 进 standalone，
+      // 安装包体积直接翻倍（0.4.23 实测 141MB → 394MB）。
+      "release/**",
+      ".git/**",
+      ".next/**",
+      // distDir 自身也必须排除：.next3/standalone 里会被 trace 进一份 .next3（自引用）
+      // 与遗留的 .next2（含旧 release，223MB）。不排除则安装包体积再翻一倍。
+      ".next2/**",
+      ".next3/**",
+      ".workbuddy/**",
+      "*.tsbuildinfo",
       "*.log",
     ],
   },

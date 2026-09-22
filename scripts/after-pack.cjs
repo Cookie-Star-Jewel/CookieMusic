@@ -13,7 +13,7 @@ const path = require("node:path");
 
 exports.default = async function afterPack(context) {
   if (context.electronPlatformName !== "win32") return;
-  const src = path.join(process.cwd(), ".next2", "standalone", "node_modules");
+  const src = path.join(process.cwd(), ".next3", "standalone", "node_modules");
   const dest = path.join(context.appOutDir, "resources", "server", "node_modules");
 
   if (!existsSync(src)) {

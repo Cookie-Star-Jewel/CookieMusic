@@ -143,12 +143,12 @@ async function pickPort(start) {
   throw new Error(`端口 ${start}~${start + 19} 都被占用`);
 }
 
-/** 打包后 server 在 resources/server；开发直跑在 <project>/.next2/standalone。 */
+/** 打包后 server 在 resources/server；开发直跑在 <project>/.next3/standalone。 */
 function serverDir() {
   if (process.env.ELECTRON_SERVER_DIR) return process.env.ELECTRON_SERVER_DIR;
   if (app.isPackaged) return path.join(process.resourcesPath, "server");
   // __dirname = <project>/electron（distDir 见 next.config.ts）
-  return path.join(__dirname, "..", ".next2", "standalone");
+  return path.join(__dirname, "..", ".next3", "standalone");
 }
 
 function startServer(cfg, port) {
@@ -208,6 +208,61 @@ function waitForServer(port, timeoutMs = 30000) {
     };
     tick();
   });
+}
+
+/** 当前内层 server 端口：重启时尽量复用（换端口＝换 origin，localStorage 里的设置会丢）。 */
+let currentPort = 0;
+
+/** 启动内层 server：挑端口 → spawn → 挂退出处理 → 等就绪，返回使用的端口。 */
+async function launchServer(cfg, preferPort) {
+  const port = await pickPort(preferPort || 3456);
+  logMain(`starting server on port ${port}`);
+  const proc = startServer(cfg, port);
+  serverProc = proc;
+  proc.on("exit", (code) => {
+    if (serverProc !== proc) return; // 已被重启流程换下的旧进程，忽略其退出
+    serverProc = null;
+    logMain(`server exited, code = ${code}`);
+    if (mainWindow && code !== 0) {
+      dialog.showErrorBox(
+        "本地服务已退出",
+        `本地服务异常退出（code ${code}），请重启应用。详情见 server.log。`,
+      );
+    }
+  });
+  await waitForServer(port);
+  currentPort = port;
+  return port;
+}
+
+/**
+ * 改完音乐目录后重启内层 server —— MUSIC_ROOTS 是 spawn 时注入的环境变量，
+ * 改 config.json 不会热更新，必须重启才生效。尽量复用原端口（同 origin，
+ * 不丢 localStorage 设置），就绪后把窗口重新指向服务，用户即见新曲库。
+ */
+async function relaunchServer(cfg) {
+  const prevPort = currentPort;
+  if (serverProc) {
+    const old = serverProc;
+    serverProc = null;
+    try {
+      old.kill();
+    } catch {
+      /* 忽略 */
+    }
+  }
+  if (prevPort) {
+    for (let i = 0; i < 30; i += 1) {
+      if (await isPortFree(prevPort)) break;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  }
+  try {
+    const port = await launchServer(cfg, prevPort || 3456);
+    if (mainWindow) mainWindow.loadURL(`http://127.0.0.1:${port}/`);
+  } catch (err) {
+    logMain(`重启本地服务失败：${err && err.message}`);
+  }
 }
 
 /* ---------------- 窗口 ---------------- */
@@ -326,28 +381,15 @@ if (!gotLock) {
 
   app.whenReady().then(async () => {
     try {
-      console.log("[pixelmusic] app ready, dev url =", DEV_URL || "(none)");
+      logMain(`app ready, dev url = ${DEV_URL || "(none)"}`);
       if (DEV_URL) {
         createWindow(DEV_URL.replace(/\/$/, ""));
         return;
       }
       const cfg = await ensureConfig();
-      console.log("[pixelmusic] config ok:", JSON.stringify(cfg));
-      const port = await pickPort(3456);
-      console.log("[pixelmusic] starting server on port", port);
-      serverProc = startServer(cfg, port);
-      serverProc.on("exit", (code) => {
-        serverProc = null;
-        console.log("[pixelmusic] server exited, code =", code);
-        if (mainWindow && code !== 0) {
-          dialog.showErrorBox(
-            "本地服务已退出",
-            `本地服务异常退出（code ${code}），请重启应用。详情见 server.log。`,
-          );
-        }
-      });
-      await waitForServer(port);
-      console.log("[pixelmusic] server ready, opening window");
+      logMain(`config ok: ${JSON.stringify(cfg)}`);
+      const port = await launchServer(cfg);
+      logMain("server ready, opening window");
       createWindow(port);
     } catch (err) {
       console.error("[pixelmusic] startup failed:", err);
@@ -390,7 +432,12 @@ ipcMain.handle("pixelmusic:dir:choose", async () => {
   if (res.canceled || res.filePaths.length === 0) return null;
   const cfg = readConfig() || { musicRoots: [], saveDir: "" };
   cfg.musicRoots = res.filePaths;
-  if (!cfg.saveDir) cfg.saveDir = res.filePaths[0];
+  // 下载目录跟随音乐目录的第一个文件夹 —— 兑现首启对话框「歌曲下载也会保存在
+  // 第一个文件夹」的承诺。（旧写法 `if (!cfg.saveDir)` 只在从未设过时才跟随，
+  // 会让下载目录永远停在旧值，与承诺不一致。）
+  cfg.saveDir = res.filePaths[0];
   writeConfig(cfg);
+  // 先把新 cfg 回给渲染层，再异步重启内层服务（约 1s），就绪后窗口自动刷新到新曲库。
+  void relaunchServer(cfg);
   return cfg;
 });

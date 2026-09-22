@@ -790,3 +790,60 @@
   height: 18px;
   pointer-events: none;
 }
+
+/* --- 上一首 / 下一首：一个圆由左右两个半圆拼成 ---
+   .fab-skip 自己不画底，两个半圆各自画（外缘圆角、内侧平边），中间留 1px
+   缝，拼起来就是一个被对半切开的圆：左半圆=上一首，右半圆=下一首。 */
+.karl-site .fab-item.fab-skip {
+  display: flex;
+  gap: 1px;
+  padding: 0;
+  background-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* 容器 hover 的高亮交给两个半圆各自处理，否则整块一起亮、看不出是两半 */
+.karl-site .fab-item.fab-skip:hover {
+  filter: none;
+}
+
+.karl-site .fab-half {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background-color: #000;
+  color: #ffe100;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: filter 0.15s ease;
+}
+
+.karl-site .fab-half-prev {
+  border-radius: 999px 0 0 999px; /* 左半圆 */
+}
+
+.karl-site .fab-half-next {
+  border-radius: 0 999px 999px 0; /* 右半圆 */
+}
+
+.karl-site .fab-half:hover {
+  filter: brightness(1.6);
+}
+
+.karl-site .fab-half:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
+.karl-site .fab-half svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}

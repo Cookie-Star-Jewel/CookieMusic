@@ -41,6 +41,11 @@ next-env.d.ts
 # Local settings (not project config)
 .claude/settings.local.json
 
+# Other AI agent local config (not project source)
+.amazonq/
+.clinerules
+.continue/
+
 # User-specific skills (not part of the template)
 .claude/skills/customize/
 .claude/skills/release/
@@ -53,6 +58,7 @@ temp/
 
 # Standalone server 构建产物
 .next2/
+.next3/
 
 # Electron 构建产物
 dist_electron/

@@ -15,7 +15,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## What This Is
 
-CookieMusic 是一个桌面音乐播放器：基于 Electron 外壳 + Next.js 16 前端，内置"隧道歌词"滚动效果、本地曲库扫描、播放列表与收藏。默认内置一首演示曲（The Show - Lenka）。
+CookieMusic 是一个桌面音乐播放器：基于 Electron 外壳 + Next.js 16 前端，内置"隧道歌词"滚动效果、本地曲库扫描、自建歌单，以及上下曲无缝衔接（等功率交叉淡化 + 退场曲低通/混响塑形）。默认内置一首演示曲（The Show - Lenka）。
 
 ## Tech Stack
 
@@ -23,7 +23,7 @@ CookieMusic 是一个桌面音乐播放器：基于 Electron 外壳 + Next.js 16
 - **Frontend:** Next.js 16（App Router, React 19, TypeScript strict）
 - **UI:** animal-island-ui + shadcn 风格、Tailwind CSS v4、Lucide 图标
 - **Styling:** Tailwind CSS v4 with oklch design tokens
-- **Audio:** 浏览器 Audio API；歌词由 LRC 解析
+- **Audio:** HTMLAudioElement + Web Audio（本地同源音源走双播放器等功率交叉淡化；GD 跨域直连走原生 volume）；歌词由 LRC 解析
 
 ## Commands
 
@@ -64,5 +64,6 @@ build/
 ## MOST IMPORTANT NOTES
 
 - 改 `AGENTS.md` 后运行 `bash scripts/sync-agent-rules.sh` 可重新生成各 AI 客户端配置。
+- **改播放逻辑前必读**：音频是**双路径**的。本地同源音源（`/api/audio`、`blob:`）走 `audio-engine.ts` 的 Web Audio 引擎槽；GD 跨域直连**不能**进 Web Audio 图（`createMediaElementSource` 后跨域会输出**静音**，不报错），只能走原生 `<audio>.volume`。当前「在响的元素」由 `KarlSite.tsx` 的 `activeAudio()`（useCallback，引用必须稳定）统一获取——`useKarlInteractions` 拿的是**getter 函数**而不是 ref，别改回 ref。队列：`queueRef`（歌单用真实 id，本地曲库用 `LIBRARY_QUEUE_ID`）。
 - 打包前确认 `build/icon.ico` 存在且 ≥256px，否则 electron-builder 报错。
 - 在线曲源（GD 音乐台）依赖外部签名，仅供研究/个人使用，遵守相关服务条款。

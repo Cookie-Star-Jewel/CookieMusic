@@ -50,6 +50,12 @@ const DOWNLOAD_ICON = (
   </svg>
 );
 
+const PLAY_ICON = (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z" />
+  </svg>
+);
+
 const PLUS_ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
     <line x1="12" y1="5" x2="12" y2="19" />
@@ -57,7 +63,11 @@ const PLUS_ICON = (
   </svg>
 );
 
-export function SearchPanel() {
+/**
+ * 「搜索歌曲」面板。
+ * `onPreview` 把在线歌送进主播放器试听（隧道歌词接管），不传则只显示下载。
+ */
+export function SearchPanel({ onPreview }: { onPreview?: (song: GdSong) => void }) {
   const [keyword, setKeyword] = useState("");
   const [br, setBr] = useState(999);
   const [songs, setSongs] = useState<GdSong[]>([]);
@@ -181,6 +191,7 @@ export function SearchPanel() {
           <col />
           <col style={{ width: "24%" }} />
           <col style={{ width: 88 }} />
+          <col style={{ width: 64 }} />
           <col style={{ width: 72 }} />
         </colgroup>
         <thead>
@@ -188,31 +199,32 @@ export function SearchPanel() {
             <th>歌名</th>
             <th>作曲者</th>
             <th>歌曲时长</th>
+            <th className="animal-table-op">播放</th>
             <th className="animal-table-op">下载</th>
           </tr>
         </thead>
         <tbody>
           {searching ? (
             <tr>
-              <td colSpan={4} className="animal-table-empty">
+              <td colSpan={5} className="animal-table-empty">
                 正在搜索…（首次会先探测线路，稍等几秒）
               </td>
             </tr>
           ) : error ? (
             <tr>
-              <td colSpan={4} className="animal-table-empty">
+              <td colSpan={5} className="animal-table-empty">
                 搜索失败：{error}
               </td>
             </tr>
           ) : !searched ? (
             <tr>
-              <td colSpan={4} className="animal-table-empty">
+              <td colSpan={5} className="animal-table-empty">
                 输入歌名或歌手后回车，搜到直接下载，自动带歌词入库。
               </td>
             </tr>
           ) : rows.length === 0 ? (
             <tr>
-              <td colSpan={4} className="animal-table-empty">
+              <td colSpan={5} className="animal-table-empty">
                 没有搜到，换个关键词或歌手名试试。
               </td>
             </tr>
@@ -225,25 +237,46 @@ export function SearchPanel() {
                   <td>{song.artist || "未知"}</td>
                   <td>{fmtDuration(song.duration)}</td>
                   <td className="animal-table-op">
+                    <button
+                      type="button"
+                      className="animal-icon-btn"
+                      data-tip-pos="top"
+                      data-tip={`试听 ${song.name}`}
+                      aria-label={`试听 ${song.name}`}
+                      onClick={() => onPreview?.(song)}
+                    >
+                      {PLAY_ICON}
+                    </button>
+                  </td>
+                  <td className="animal-table-op">
                     <span className="animal-op-group">
                       {job?.state === "running" ? (
                         <span className="animal-status-tag">下载中…</span>
                       ) : job?.state === "ok" ? (
-                        <span className="animal-status-tag on" data-tip={job.note}>
+                        <span
+                          className="animal-status-tag on"
+                          data-tip-pos="top"
+                          data-tip={job.note}
+                        >
                           已下载
                         </span>
                       ) : job?.state === "error" ? (
-                        <span
-                          className="animal-status-tag err"
+                        <button
+                          type="button"
+                          className="animal-status-tag err btn"
+                          data-tip-pos="top"
                           data-tip={job.note}
-                          aria-label={`下载失败：${job.note}`}
+                          aria-label={`下载失败：${job.note}，点击重新下载`}
+                          disabled={busy}
+                          onClick={() => void download(song)}
                         >
-                          失败
-                        </span>
+                          重新下载
+                        </button>
                       ) : (
                         <button
                           type="button"
                           className="animal-icon-btn"
+                          data-tip-pos="top"
                           data-tip={
                             busy
                               ? "有任务在下载，请稍候"
@@ -416,7 +449,8 @@ export function PlaylistPanel({
   active: boolean;
   /** 当前歌曲的音频地址，用来高亮正在播放的行 */
   currentUrl: string;
-  onPlayTrack: (track: Track) => void;
+  /** list 是当前展示顺序（供上一首 / 下一首用） */
+  onPlayTrack: (track: Track, list: Track[]) => void;
 }) {
   const [tracks, setTracks] = useState<Track[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -584,6 +618,7 @@ export function PlaylistPanel({
             type="button"
             className="pl-search-clear"
             data-tip="清除搜索"
+            data-tip-pos="top"
             aria-label="清除搜索"
             onClick={() => setFilter("")}
           >
@@ -602,11 +637,11 @@ export function PlaylistPanel({
               className={`pl-row${url === currentUrl ? " current" : ""}`}
               role="button"
               tabIndex={0}
-              onClick={() => onPlayTrack(track)}
+              onClick={() => onPlayTrack(track, shown)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  onPlayTrack(track);
+                  onPlayTrack(track, shown);
                 }
               }}
             >
@@ -1008,6 +1043,87 @@ export function PlaylistsPanel({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ================================================================== *
+ * 设置（右侧抽屉）：目前只有「无缝衔接上下歌曲」开关。
+ * 开关由 KarlSite 持有并写 localStorage（@/lib/settings），这里只做受控显示。
+ * ================================================================== */
+
+export function SettingsPanel({
+  seamless,
+  onChangeSeamless,
+  musicDirs,
+  dirChanging,
+  onChangeMusicDir,
+}: {
+  seamless: boolean;
+  onChangeSeamless: (next: boolean) => void;
+  musicDirs: string[];
+  dirChanging: boolean;
+  onChangeMusicDir: () => void;
+}) {
+  return (
+    <div className="st-panel">
+      <div className="st-row">
+        <div className="st-text">
+          <div className="st-label">无缝衔接上下歌曲</div>
+          <div className="st-desc">
+            切歌时让上一首与下一首等功率交叉淡化，本地曲库的歌还会给退场曲加低通 +
+            混响，让它慢慢「飘走」。关掉则切歌直接硬切。
+          </div>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={seamless}
+          aria-label="无缝衔接上下歌曲"
+          className={`st-switch${seamless ? " on" : ""}`}
+          onClick={() => onChangeSeamless(!seamless)}
+        >
+          <span className="st-knob" aria-hidden="true" />
+        </button>
+      </div>
+
+      <p className="st-hint">
+        左下角新增的圆形按钮：左半圆 = 上一首，右半圆 = 下一首（歌单或曲库里都生效）。
+      </p>
+      <p className="st-hint">
+        说明：在线搜到的歌是跨域直链，无法进入 Web Audio 图（会静音），所以它们用原生
+        等功率淡入淡出，不做低通 / 混响塑形。
+      </p>
+
+      <div className="st-row">
+        <div className="st-text">
+          <div className="st-label">音乐目录</div>
+          <div className="st-desc">应用从这里扫描本地曲库（可选择多个文件夹）。</div>
+          <div className="st-dirs">
+            {musicDirs.length > 0 ? (
+              musicDirs.map((dir) => (
+                <div className="st-dir" key={dir}>
+                  {dir}
+                </div>
+              ))
+            ) : (
+              <div className="st-dir st-dir-empty">未设置</div>
+            )}
+          </div>
+        </div>
+        <button
+          type="button"
+          className="st-btn"
+          onClick={onChangeMusicDir}
+          disabled={dirChanging}
+        >
+          {dirChanging ? "更改中…" : "更改…"}
+        </button>
+      </div>
+
+      <p className="st-hint">
+        点「更改…」选择文件夹后，应用会自动重启内层服务并刷新界面来加载新曲库。
+      </p>
     </div>
   );
 }

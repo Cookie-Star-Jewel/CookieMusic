@@ -206,7 +206,12 @@ const ARROW_KEY_PX = 120;
 
 export function useKarlInteractions(
   rootRef: RefObject<HTMLDivElement | null>,
-  audioRef?: RefObject<HTMLAudioElement | null>,
+  /**
+   * 取"当前在响"的音频元素。本地同源歌走 Web Audio 引擎槽、在线跨域歌走原生
+   * <audio>，两者会来回切，所以传**函数**而不是 ref（每次用时现取）。
+   * 调用方必须传稳定引用（useCallback），否则本 effect 会每帧重建。
+   */
+  getAudio?: () => HTMLAudioElement | null,
   /** 当前歌曲数据（切歌时无需重建整个交互层，ref 实时读取）。 */
   songRef?: RefObject<SongData | null>,
 ) {
@@ -219,20 +224,16 @@ export function useKarlInteractions(
     if (bound.length === 0) return;
 
     /* audio — the song drives the loop while playing ------------------- */
-    const audio = audioRef?.current ?? null;
     let duration = DEFAULT_SONG.fallbackDuration;
+    /** 每帧现取在响元素（本地/在线会切换），顺带刷新真实时长。 */
+    const syncDuration = (a: HTMLAudioElement | null) => {
+      if (a && Number.isFinite(a.duration) && a.duration > 0) duration = a.duration;
+    };
     const seekAudio = (sLoops: number) => {
-      if (audio) audio.currentTime = timeFromScroll(sLoops, duration, currentSong());
+      const a = getAudio?.() ?? null;
+      syncDuration(a);
+      if (a) a.currentTime = timeFromScroll(sLoops, duration, currentSong());
     };
-    const onMetadata = () => {
-      if (audio && Number.isFinite(audio.duration) && audio.duration > 0) {
-        duration = audio.duration;
-      }
-    };
-    if (audio) {
-      if (audio.readyState >= 1) onMetadata();
-      audio.addEventListener("loadedmetadata", onMetadata);
-    }
 
     /* virtual scroll state -------------------------------------------- */
     let virtual = 0; // px of input; unbounded, negative = above the start
@@ -362,6 +363,8 @@ export function useKarlInteractions(
       // the nearest cycle of the current position, so seeks and the song's
       // own loop-back stay visually continuous (s and s+loopsPerCycle
       // rotate and read identically).
+      const audio = getAudio?.() ?? null;
+      syncDuration(audio);
       if (audio && !audio.paused && !audio.ended) {
         const song = currentSong();
         const s0 = scrollFromTime(audio.currentTime, duration, song);
@@ -418,7 +421,6 @@ export function useKarlInteractions(
       window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("keydown", onKeydown);
       window.removeEventListener("resize", onResize);
-      audio?.removeEventListener("loadedmetadata", onMetadata);
     };
-  }, [rootRef, audioRef, songRef]);
+  }, [rootRef, getAudio, songRef]);
 }

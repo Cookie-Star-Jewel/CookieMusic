@@ -3,7 +3,7 @@
  *
  * 1. Turbopack 的 standalone 组装在本项目配置下只产出 .next/static——
  *    SSR 产物（.next/server/）、required-server-files.json 等全部缺失，
- *    运行时 /_next/static 一律 404（界面裸 HTML）。这里从 .next2 手工
+ *    运行时 /_next/static 一律 404（界面裸 HTML）。这里从 .next3 手工
  *    合成完整 .next：static + server + 顶层清单文件。
  * 2. 把 public 拷进 standalone。
  *
@@ -15,11 +15,11 @@ import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const dist = path.join(root, ".next2");
+const dist = path.join(root, ".next3");
 const standalone = path.join(dist, "standalone");
 
 if (!existsSync(path.join(standalone, "server.js"))) {
-  console.error("未找到 .next2/standalone/server.js —— 先跑 `npm run build`。");
+  console.error("未找到 .next3/standalone/server.js —— 先跑 `npm run build`。");
   process.exit(1);
 }
 
@@ -79,7 +79,7 @@ if (existsSync(publicDir)) {
 }
 
 // distDir 迁移的收尾：server.js 内联 config 与 required-server-files.json 里的
-// 路径引用（distDir / distDirRoot / configFilePaths…）都写着 ".next2"，
+// 路径引用（distDir / distDirRoot / configFilePaths…）都写着 ".next3"，
 // 而 standalone 内部目录名固定是 ".next"——不替换的话 /_next/static 全 404。
 // （这就是 0.4.7~0.4.9 首版界面裸 HTML 的根因。）
 const replacements = [
@@ -89,10 +89,10 @@ const replacements = [
 for (const file of replacements) {
   if (!existsSync(file)) continue;
   const raw = readFileSync(file, "utf8");
-  const count = (raw.match(/\.next2/g) || []).length;
+  const count = (raw.match(/\.next3/g) || []).length;
   if (count > 0) {
-    writeFileSync(file, raw.split(".next2").join(".next"));
-    console.log(`${path.basename(file)}：已替换 ${count} 处 .next2 → .next`);
+    writeFileSync(file, raw.split(".next3").join(".next"));
+    console.log(`${path.basename(file)}：已替换 ${count} 处 .next3 → .next`);
   }
 }
 

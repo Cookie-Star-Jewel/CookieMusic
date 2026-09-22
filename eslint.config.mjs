@@ -16,6 +16,7 @@ const eslintConfig = defineConfig([
     // extraction tooling. Not application code — linting them is pure noise.
     "docs/**",
     ".next2/**",
+    ".next3/**",
     // 打包/清理等 Node 脚本（CommonJS require 是刻意为之），非应用代码。
     "scripts/**",
     "electron/**",

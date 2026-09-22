@@ -211,6 +211,9 @@
 .animal-table .animal-table-op {
   width: 1%;
   text-align: center;
+  /* td 全局 overflow:hidden 会把指向按钮的气泡一并裁掉；
+     操作列只有图标/胶囊，不需要省略号截断，放行溢出 */
+  overflow: visible;
 }
 
 .animal-op-group {
@@ -563,7 +566,9 @@
   font-weight: 500;
 }
 
-.pl-search-clear {
+/* 提权为 .pl-search .pl-search-clear（0,2,0），盖过 [data-tip]{position:relative}
+   （同样 0,1,0 且源码更靠后）否则清除按钮会丢掉绝对定位掉到输入框下方左侧 */
+.pl-search .pl-search-clear {
   position: absolute;
   right: 8px;
   top: 50%;
@@ -840,6 +845,29 @@
 .animal-status-tag.err {
   background: #fdeceb;
   color: #d64545;
+}
+
+/* 状态胶囊的按钮用法（下载失败 → 重新下载）：外观沿用 .err，只补按钮复位与反馈 */
+.animal-status-tag.btn {
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.15s;
+}
+
+.animal-status-tag.btn:hover:not(:disabled) {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+
+.animal-status-tag.btn:focus-visible {
+  outline: 2px solid #ffcc00;
+  outline-offset: 2px;
+}
+
+.animal-status-tag.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .animal-icon-btn:disabled {
@@ -1390,4 +1418,184 @@
 .plst-loop-panel .plst-loop-opts {
   overflow: hidden;
   min-height: 0;
+}
+
+/* ================================================================
+   左下角「上一首 / 下一首」：一个圆由两个左右对称的半圆拼成。
+   点击落在中线左侧 = 上一首，右侧 = 下一首（判定在 onClick 里做）。
+   左侧半圆默认略深，hover 时按鼠标所在半边分别提亮，给出方向暗示。
+   ================================================================ */
+.fab-skip {
+  /* 半圆拼合处不留缝，圆本身由 SVG 里的两段弧画成 */
+  padding: 0;
+}
+
+.fab-skip svg {
+  width: 22px;
+  height: 22px;
+}
+
+.fab-skip:hover {
+  transform: scale(1.08);
+}
+
+/* ================================================================
+   设置抽屉：开关行 + 说明文字
+   ================================================================ */
+.st-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 2px 2px 6px;
+}
+
+.st-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 2px solid #e8ddc3;
+  border-radius: 16px;
+  background: #fffdf5;
+}
+
+.st-text {
+  min-width: 0;
+}
+
+.st-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #725d42;
+  line-height: 1.4;
+}
+
+.st-desc {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #a09080;
+  line-height: 1.6;
+}
+
+.st-switch {
+  flex-shrink: 0;
+  position: relative;
+  width: 52px;
+  height: 30px;
+  padding: 0;
+  border: 2px solid #d8ccb2;
+  border-radius: 50px;
+  background: #f0e8d8;
+  cursor: pointer;
+  transition: background-color 0.18s, border-color 0.18s;
+}
+
+.st-switch.on {
+  background: #19c8b9;
+  border-color: #12a99c;
+}
+
+.st-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(61, 52, 40, 0.3);
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.st-switch.on .st-knob {
+  transform: translateX(22px);
+}
+
+.st-switch:focus-visible {
+  outline: 2px solid #ffcc00;
+  outline-offset: 2px;
+}
+
+.st-hint {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #a09080;
+  line-height: 1.7;
+}
+
+/* 音乐目录：设置行里展示当前目录 + 「更改…」按钮（复用 .st-row / .st-label 骨架） */
+.st-dirs {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.st-dir {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8a7a63;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.st-dir-empty {
+  color: #bdb2a0;
+  font-weight: 500;
+}
+
+.st-btn {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: 2px solid #d8ccb2;
+  border-radius: 50px;
+  background: #fffdf5;
+  font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #725d42;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.18s, border-color 0.18s, color 0.18s;
+}
+
+.st-btn:hover:not(:disabled) {
+  background: #f6efdd;
+  border-color: #19c8b9;
+  color: #12a99c;
+}
+
+.st-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.st-btn:focus-visible {
+  outline: 2px solid #ffcc00;
+  outline-offset: 2px;
+}
+
+/* 顶部短提示（播放失败 / 目录未设置等），4.5s 后由 React 自动移除。
+   .karl-site 无 transform，fixed 相对视口；z-index 高于抽屉（1000/1001）。 */
+.karl-notice {
+  position: fixed;
+  left: 50%;
+  top: 22px;
+  z-index: 1002;
+  max-width: min(560px, 88vw);
+  padding: 10px 18px;
+  border: 2px solid #e8ddc3;
+  border-radius: 14px;
+  background: #fffdf5;
+  color: #725d42;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(61, 52, 40, 0.2);
+  transform: translateX(-50%);
+  pointer-events: none;
 }
