@@ -108,9 +108,9 @@ export function songDataFromLyrics(
  * 来源：本地音乐库 The Show - Lenka.lrc（自带曲目，跳过开头 作词/作曲 credits 元数据）
  * ------------------------------------------------------------------ */
 
-/** 歌曲音频（本地音乐库直读，id 为该曲文件名的 base64url，需本机存在对应文件）。 */
-export const SONG_AUDIO_URL =
-  "/api/audio?id=RTpcTVVTSUNcVGhlIFNob3cgLSBMZW5rYS5mbGFj";
+/** 歌曲音频：随包内置（public/demo/the-show-lenka.flac），同源静态路径。
+ * 走 /demo 而非 /api/audio，绕开 decodeId 的 MUSIC_ROOTS 门禁 —— 首次下载无需用户配置目录即可播放。 */
+export const SONG_AUDIO_URL = "/demo/the-show-lenka.flac";
 
 const SONG_LINES: string[] = [
   "I'm just a little bit",

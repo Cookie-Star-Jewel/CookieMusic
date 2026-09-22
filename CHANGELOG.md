@@ -2,6 +2,12 @@
 
 所有重要变更记录于此。格式参考 [Keep a Changelog](https://keepachangelog.com/)。
 
+## [0.4.31] - 2026-09
+
+### Fixed
+
+- **首次下载后内置演示曲《The Show - Lenka》听不了**：演示曲音频原先写死指向 `E:\MUSIC\The Show - Lenka.flac`，经 `/api/audio` 的 `decodeId` 校验 `MUSIC_ROOTS` 门禁——首次用户要么机器上没这个目录、要么首启选了别的目录，于是 `decodeId` 返回 `null` → 接口 404 → 静默没声音（歌词因内嵌在 `lyrics.ts` 仍正常显示）。现把演示曲（26.4MB flac）**随包内置到 `public/demo/the-show-lenka.flac`**，`SONG_AUDIO_URL` 改为同源静态路径 `/demo/the-show-lenka.flac`，绕开门禁；同源路径仍走 Web Audio 引擎槽，无缝衔接/交叉淡化保留。开箱即听，不再依赖用户配置曲库目录。
+
 ## [0.4.30] - 2026-09
 
 ### Fixed
