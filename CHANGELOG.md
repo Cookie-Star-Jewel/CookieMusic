@@ -2,6 +2,12 @@
 
 所有重要变更记录于此。格式参考 [Keep a Changelog](https://keepachangelog.com/)。
 
+## [0.4.32] - 2026-09
+
+### Fixed
+
+- **在线搜索完全不可用（GD 音乐台 2026-09-16 更新所致）**：旧实现 POST 到 `music.gdstudio.xyz/api.php` 并携带逆向签名（jsjiami v7 crc32），配合 `music.gdstudio.org` 双域名 `/time` 探活回退。GD 更新后**老站点网络层下线**（本机浏览器实测 `Failed to fetch`），`pickBase()` 两个域名全失败 → 抛「GD 音乐台无法访问」→ 搜索挂。现改走官方文档的**免签名公共 API** `music-api.gdstudio.xyz/api.php`（GET + 查询参数）：搜索 / 取歌直链 / 歌词三个调用全部迁移；签名路由 `/api/gd/sign` 保留但前端不再调用。实测该域名对真浏览器放行（Cloudflare 挡脚本客户端）、跨域 fetch 可读（对照 baidu 被拦）；网络层瞬断自动重试一次；歌词保留 lrclib 兜底。响应字段对齐：`id`（track_id）优先（文档标注 `url_id` 已废弃，实测同值）、新响应不再返回时长（extra_data）→ 时长列显示「—」。
+
 ## [0.4.31] - 2026-09
 
 ### Fixed
