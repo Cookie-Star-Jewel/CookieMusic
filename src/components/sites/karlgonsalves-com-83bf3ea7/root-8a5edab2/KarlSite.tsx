@@ -373,14 +373,17 @@ export default function KarlSite() {
 
   const handleTimeUpdate = () => {
     const audio = activeAudio();
-    if (!audio || audio.loop || audio.paused) return;
+    if (!audio) return;
     // 真实时长回填：GD 免签名公共 API 的搜索结果不带时长，播放后把
-    // audio.duration 通过事件广播给搜索面板回填该行（每首歌只发一次）
+    // audio.duration 通过事件广播给搜索面板回填该行（每首歌只发一次）。
+    // 必须放在 loop/paused 守卫之前——试听来源无队列、原生 loop=true，
+    // 放在守卫后会被「循环歌不处理」挡掉（0.4.35 实测回填失效的根因）。
     if (playingId && Number.isFinite(audio.duration) && audio.duration > 0 && !durationSentRef.current.has(playingId)) {
       // eslint-disable-next-line react-hooks/immutability -- 事件回调内标记已发送，非渲染期
       durationSentRef.current.add(playingId);
       window.dispatchEvent(new CustomEvent("gd-duration", { detail: { id: playingId, duration: Math.round(audio.duration) } }));
     }
+    if (audio.loop || audio.paused) return;
     const q = queueRef.current;
     const remaining = (audio.duration || Infinity) - audio.currentTime;
     // 触发窗口按「计划时长」自适应（长交叉要更早开始），没有计划就退回兜底值
