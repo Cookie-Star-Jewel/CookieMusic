@@ -1,16 +1,13 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState, type ChangeEvent } from "react";
-import { BackTop, Collapse } from "animal-island-ui";
+import { BackTop, Button, Collapse } from "animal-island-ui";
 import {
   CloseIcon,
   DownloadIcon,
   FolderIcon,
-  MinusIcon,
   PlayIcon,
-  PlusIcon,
   SearchIcon,
-  TrashIcon,
 } from "naive-icons";
 import type { Track } from "@/lib/track";
 import { type SongData } from "./lyrics";
@@ -52,6 +49,13 @@ function fmtDuration(sec: number): string {
   if (!s) return "—";
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
+
+const PLUS_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
 
 /**
  * 「搜索歌曲」面板。
@@ -254,7 +258,9 @@ export function SearchPanel({ onPreview }: { onPreview?: (song: GdSong) => void 
                   <td className="animal-table-op">
                     <span className="animal-op-group">
                       {job?.state === "running" ? (
-                        <span className="animal-status-tag">下载中…</span>
+                        <Button size="small" loading>
+                          下载中
+                        </Button>
                       ) : job?.state === "ok" ? (
                         <span className="animal-status-tag on">已下载</span>
                       ) : job?.state === "error" ? (
@@ -651,7 +657,6 @@ export function PlaylistPanel({
               <button
                 type="button"
                 className="pl-del"
-                data-tip={`从硬盘删除「${track.title}」`}
                 aria-label={`删除 ${track.title}`}
                 disabled={deletingId === track.id}
                 onClick={(event) => {
@@ -659,19 +664,18 @@ export function PlaylistPanel({
                   void del(track);
                 }}
               >
-                {deletingId === track.id ? "…" : <CloseIcon size={13} color="currentColor" />}
+                {deletingId === track.id ? "…" : "✕"}
               </button>
               <button
                 type="button"
                 className="pl-add"
-                data-tip={`把「${track.title}」加进歌单`}
                 aria-label={`把 ${track.title} 加进歌单`}
                 onClick={(event) => {
                   event.stopPropagation();
                   openAdd(track);
                 }}
               >
-                <PlusIcon size={15} color="currentColor" />
+                {PLUS_ICON}
               </button>
             </div>
             {addTarget === track.id ? (
@@ -818,8 +822,6 @@ export function PlaylistsPanel({
   const [notice, setNotice] = useState<string | null>(null);
   /** 取直链/歌词中的歌（点播完成后 loadSong 会关抽屉） */
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  /** 展开了循环模式选择的那张歌单 id（null=全收起；受控、默认收起） */
-  const [loopOpenId, setLoopOpenId] = useState<string | null>(null);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refresh = () => setPlaylists(listPlaylists());
@@ -940,49 +942,32 @@ export function PlaylistsPanel({
                       }
                     }}
                   >
-                    <TrashIcon size={14} color="currentColor" />
+                    ✕
                   </span>
                 </span>
               }
               answer={
                 <>
-                  {/* 循环模式：受控轻量折叠——默认收起，点头部切换，绝不记忆展开态 */}
+                  {/* 循环模式：三枚横排按钮（当前模式高亮），无需展开 */}
                   <div
-                    className="plst-loop-collapse"
+                    className="plst-loop-seg"
                     onClick={(event) => event.stopPropagation()}
                     onKeyDown={(event) => event.stopPropagation()}
                   >
-                    <button
-                      type="button"
-                      className="plst-loop-toggle"
-                      aria-expanded={loopOpenId === pl.id}
-                      onClick={() => setLoopOpenId((cur) => (cur === pl.id ? null : pl.id))}
-                    >
-                      <span className="plst-loop-icon">
-                        {loopOpenId === pl.id ? <MinusIcon size={11} color="currentColor" /> : <PlusIcon size={11} color="currentColor" />}
-                      </span>
-                      <span className="plst-loop-current">
-                        {LOOP_MODES.find((m) => m.value === (pl.loopMode ?? "list"))?.label ??
-                          "列表循环"}
-                      </span>
-                    </button>
-                    <div className={`plst-loop-panel${loopOpenId === pl.id ? " open" : ""}`}>
-                      <div className="plst-loop-opts">
-                        {LOOP_MODES.map((m) => (
-                          <button
-                            key={m.value}
-                            type="button"
-                            data-on={(pl.loopMode ?? "list") === m.value}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setPlaylistLoopMode(pl.id, m.value);
-                            }}
-                          >
-                            {m.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    {LOOP_MODES.map((m) => (
+                      <button
+                        key={m.value}
+                        type="button"
+                        className="plst-loop-btn"
+                        data-on={(pl.loopMode ?? "list") === m.value}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setPlaylistLoopMode(pl.id, m.value);
+                        }}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
                   </div>
                   {pl.songs.length === 0 ? (
                     <div className="plst-tip">歌单是空的，去「搜索歌曲」点 ＋ 加歌。</div>

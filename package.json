@@ -1,7 +1,7 @@
 {
   "name": "cookie-music",
   "productName": "CookieMusic",
-  "version": "0.4.34",
+  "version": "0.4.35",
   "private": true,
   "description": "CookieMusic —— 基于 Electron + Next.js 的桌面音乐播放器，带隧道歌词与本地曲库管理。",
   "author": "CookieMusic Contributors",

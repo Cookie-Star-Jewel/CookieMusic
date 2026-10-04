@@ -1253,34 +1253,18 @@
   opacity: 0.08;
 }
 
-/* 歌单卡头循环模式折叠面板（animal-island-ui Collapse）：
-   收起只显示当前模式名，展开在文档流内列出三个选项——绝不被遮挡 */
-.plst-loop-collapse {
+/* 歌单卡头循环模式：三枚横排按钮，当前模式高亮（无展开） */
+.plst-loop-seg {
+  display: flex;
+  align-items: center;
   flex: 0 1 auto;
   min-width: 0;
-  margin-left: 6px;
-  max-width: 170px;
-}
-
-.plst-loop-current {
-  font-size: 12px;
-  font-weight: 700;
-  color: #4a3728;
-  white-space: nowrap;
-}
-
-.plst-loop-opts {
-  display: flex;
-  flex-direction: column;
   gap: 4px;
-  /* padding 不能放这里：0fr 收起时 border-box 有 padding 高度下限，
-     行收不到 0，选中的绿色按钮会从缝里露出一条（0.4.32 反馈）。呼吸感挪到按钮 margin。 */
-  padding: 0;
+  margin: 2px 0 4px;
 }
 
-.plst-loop-opts button {
-  margin: 4px 0;
-  padding: 5px 10px;
+.plst-loop-btn {
+  padding: 4px 12px;
   border: 0;
   border-radius: 30px;
   background: transparent;
@@ -1288,17 +1272,17 @@
   font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 12px;
   font-weight: 700;
-  text-align: left;
+  white-space: nowrap;
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s;
 }
 
-.plst-loop-opts button[data-on="true"] {
+.plst-loop-btn[data-on="true"] {
   background: #11a89b;
   color: #fffdf5;
 }
 
-.plst-loop-opts button:hover:not([data-on="true"]) {
+.plst-loop-btn:hover:not([data-on="true"]) {
   background: #f0e8d8;
   color: #4a3728;
 }
@@ -1377,51 +1361,7 @@
   bottom: calc(100% + 6px);
 }
 
-/* 受控轻量折叠：循环模式（grid rows 过渡，贴官方丝滑；默认收起） */
-.plst-loop-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 4px 6px;
-  border: 0;
-  border-radius: 30px;
-  background: transparent;
-  cursor: pointer;
-  text-align: left;
-}
 
-.plst-loop-toggle:hover {
-  background: #f0e8d8;
-}
-
-.plst-loop-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #11a89b;
-  color: #fffdf5;
-  font-size: 12px;
-  line-height: 1;
-}
-
-.plst-loop-panel {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.plst-loop-panel.open {
-  grid-template-rows: 1fr;
-}
-
-.plst-loop-panel .plst-loop-opts {
-  overflow: hidden;
-  min-height: 0;
-}
 
 /* ================================================================
    左下角「上一首 / 下一首」：一个圆由两个左右对称的半圆拼成。
@@ -1628,4 +1568,9 @@
   transform: translateY(-50%);
   pointer-events: none;
   color: #b3a48c;
+}
+
+/* 搜索歌曲抽屉的 searchbar 自带 14px 内边距，图标要再让出输入框内 16px */
+.animal-searchbar .animal-input-icon {
+  left: 30px;
 }
