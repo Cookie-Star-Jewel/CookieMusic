@@ -1273,10 +1273,13 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 4px 0;
+  /* padding 不能放这里：0fr 收起时 border-box 有 padding 高度下限，
+     行收不到 0，选中的绿色按钮会从缝里露出一条（0.4.32 反馈）。呼吸感挪到按钮 margin。 */
+  padding: 0;
 }
 
 .plst-loop-opts button {
+  margin: 4px 0;
   padding: 5px 10px;
   border: 0;
   border-radius: 30px;

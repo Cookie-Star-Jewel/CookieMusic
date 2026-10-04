@@ -588,6 +588,23 @@ export default function KarlSite() {
     fadeSkipRef.current = false;
     const preSlot = preloadedSlotRef.current;
     preloadedSlotRef.current = null;
+    /* 路径互斥：本地引擎槽与在线原生 <audio> 互斥——此前两条分支互不停对方，
+       播本地歌时点搜索试听会两首同响（0.4.32 反馈）。交叉淡化收尾（skipIn）
+       的退场由 finishCrossfade 负责，这里只管「点播/试听」的路径切换；
+       stopSlot 自带 src 守卫，不会误杀同 tick 内被复用的槽。 */
+    if (!(skipIn && preSlot !== null) && !cfActiveRef.current) {
+      const eng = engineRef.current;
+      if (eng) {
+        stopSlot(eng.slots[0], eng.ctx);
+        stopSlot(eng.slots[1], eng.ctx);
+      }
+      const online = audioRef.current;
+      if (online && !online.paused) {
+        online.pause();
+        online.removeAttribute("src");
+        online.load();
+      }
+    }
     const useLoop = queueRef.current ? queueLoopMode() === "single" : true;
 
     if (isSameOriginSrc(song.audioUrl)) {
