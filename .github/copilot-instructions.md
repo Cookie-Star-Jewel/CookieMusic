@@ -66,4 +66,4 @@ build/
 - 改 `AGENTS.md` 后运行 `bash scripts/sync-agent-rules.sh` 可重新生成各 AI 客户端配置。
 - **改播放逻辑前必读**：音频是**双路径**的。本地同源音源（`/api/audio`、`blob:`）走 `audio-engine.ts` 的 Web Audio 引擎槽；GD 跨域直连**不能**进 Web Audio 图（`createMediaElementSource` 后跨域会输出**静音**，不报错），只能走原生 `<audio>.volume`。当前「在响的元素」由 `KarlSite.tsx` 的 `activeAudio()`（useCallback，引用必须稳定）统一获取——`useKarlInteractions` 拿的是**getter 函数**而不是 ref，别改回 ref。队列：`queueRef`（歌单用真实 id，本地曲库用 `LIBRARY_QUEUE_ID`）。
 - 打包前确认 `build/icon.ico` 存在且 ≥256px，否则 electron-builder 报错。
-- 在线曲源（GD 音乐台）依赖外部签名，仅供研究/个人使用，遵守相关服务条款。
+- 在线曲源（GD 音乐台免签名公共 API `music-api.gdstudio.xyz`，渲染层直连、无签名依赖）仅供研究/个人使用，遵守相关服务条款。

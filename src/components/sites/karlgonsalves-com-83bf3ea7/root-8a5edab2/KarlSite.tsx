@@ -864,8 +864,8 @@ export default function KarlSite() {
 
   /* 我的歌单点播：交给主播放器（左下角控制 / 隧道歌词全部接管）。
      queue 记录整张歌单、所属歌单 id 与当前下标，ended 时由循环模式决定下一首。
-     本地曲库歌（source="local"）走 /api/audio，其余浏览器直连 GD
-     （签名走 /api/gd/sign）拿 CDN 直链与歌词。 */
+     本地曲库歌（source="local"）走 /api/audio，其余浏览器直连 GD 免签名
+     公共 API（music-api.gdstudio.xyz，见 gd-client.ts）拿 CDN 直链与歌词。 */
   const playPlaylistSong = async (
     s: PlaylistSong,
     queue?: { playlistId: string; songs: PlaylistSong[]; index: number },

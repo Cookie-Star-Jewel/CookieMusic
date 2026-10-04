@@ -19,10 +19,11 @@ import {
 
 /* ================================================================== *
  * 搜索歌曲（顶部抽屉）：GD音乐台在线搜索，animal-island-ui Table + Pagination。
- * 浏览器直连 api.php（签名走 /api/gd/sign，TLS 指纹问题决定了请求必须从
- * 浏览器发）；下载时前端拿 CDN 直链 + 歌词，交给 /api/gd/download 流式落盘
- * （CDN 无指纹校验，server 可下）。搜索结果的字段映射（extra_data.duration、
- * url_id/lyric_id、artist 数组）由 gd-client 的 gdSearch 统一处理。
+ * 浏览器直连免签名公共 API（music-api.gdstudio.xyz；Cloudflare 挡脚本客户端、
+ * 跨域 fetch 放行，请求必须从渲染层发，详见 gd-client.ts）；下载时前端拿
+ * CDN 直链 + 歌词，交给 /api/gd/download 流式落盘（CDN 无指纹校验，server
+ * 可下）。搜索结果的字段映射（id/lyric_id、artist 数组）由 gd-client 的
+ * gdSearch 统一处理。
  * ================================================================== */
 
 interface Job {
