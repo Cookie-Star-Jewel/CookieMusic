@@ -1,7 +1,17 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState, type ChangeEvent } from "react";
-import { Collapse } from "animal-island-ui";
+import { BackTop, Collapse } from "animal-island-ui";
+import {
+  CloseIcon,
+  DownloadIcon,
+  FolderIcon,
+  MinusIcon,
+  PlayIcon,
+  PlusIcon,
+  SearchIcon,
+  TrashIcon,
+} from "naive-icons";
 import type { Track } from "@/lib/track";
 import { type SongData } from "./lyrics";
 import { gdGetLyric, gdGetUrl, gdSearch, type GdSong } from "@/lib/gd-client";
@@ -43,27 +53,6 @@ function fmtDuration(sec: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-const DOWNLOAD_ICON = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-    <polyline points="7 10 12 15 17 10" />
-    <line x1="12" y1="15" x2="12" y2="3" />
-  </svg>
-);
-
-const PLAY_ICON = (
-  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z" />
-  </svg>
-);
-
-const PLUS_ICON = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-    <line x1="12" y1="5" x2="12" y2="19" />
-    <line x1="5" y1="12" x2="19" y2="12" />
-  </svg>
-);
-
 /**
  * 「搜索歌曲」面板。
  * `onPreview` 把在线歌送进主播放器试听（隧道歌词接管），不传则只显示下载。
@@ -78,6 +67,18 @@ export function SearchPanel({ onPreview }: { onPreview?: (song: GdSong) => void 
   const [jobs, setJobs] = useState<Record<string, Job>>({});
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  /** 真实时长回填：GD 免签名公共 API 搜索不带时长，主播放器播到哪首就广播哪首 */
+  const [durations, setDurations] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const onDuration = (event: Event) => {
+      const { id, duration } = (event as CustomEvent<{ id: string; duration: number }>).detail;
+      if (!id || !Number.isFinite(duration) || duration <= 0) return;
+      setDurations((prev) => (prev[id] === duration ? prev : { ...prev, [id]: duration }));
+    };
+    window.addEventListener("gd-duration", onDuration);
+    return () => window.removeEventListener("gd-duration", onDuration);
+  }, []);
 
   async function search() {
     const q = keyword.trim();
@@ -155,16 +156,19 @@ export function SearchPanel({ onPreview }: { onPreview?: (song: GdSong) => void 
   return (
     <div className="animal-table">
       <div className="animal-searchbar">
-        <input
-          type="search"
-          value={keyword}
-          onChange={(event) => setKeyword(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") void search();
-          }}
-          placeholder="歌名 / 歌手…"
-          aria-label="搜索关键词"
-        />
+        <div className="animal-searchbar-field">
+          <SearchIcon size={16} className="animal-input-icon" />
+          <input
+            type="search"
+            value={keyword}
+            onChange={(event) => setKeyword(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void search();
+            }}
+            placeholder="歌名 / 歌手…"
+            aria-label="搜索关键词"
+          />
+        </div>
         <button
           type="button"
           className="animal-btn"
@@ -236,17 +240,15 @@ export function SearchPanel({ onPreview }: { onPreview?: (song: GdSong) => void 
                 <tr key={`${song.id}-${index}`}>
                   <td className="animal-table-name">{song.name}</td>
                   <td>{song.artist || "未知"}</td>
-                  <td>{fmtDuration(song.duration)}</td>
+                  <td>{fmtDuration(durations[song.id] ?? song.duration)}</td>
                   <td className="animal-table-op">
                     <button
                       type="button"
                       className="animal-icon-btn"
-                      data-tip-pos="top"
-                      data-tip={`试听 ${song.name}`}
                       aria-label={`试听 ${song.name}`}
                       onClick={() => onPreview?.(song)}
                     >
-                      {PLAY_ICON}
+                      <PlayIcon size={16} color="currentColor" />
                     </button>
                   </td>
                   <td className="animal-table-op">
@@ -254,19 +256,11 @@ export function SearchPanel({ onPreview }: { onPreview?: (song: GdSong) => void 
                       {job?.state === "running" ? (
                         <span className="animal-status-tag">下载中…</span>
                       ) : job?.state === "ok" ? (
-                        <span
-                          className="animal-status-tag on"
-                          data-tip-pos="top"
-                          data-tip={job.note}
-                        >
-                          已下载
-                        </span>
+                        <span className="animal-status-tag on">已下载</span>
                       ) : job?.state === "error" ? (
                         <button
                           type="button"
                           className="animal-status-tag err btn"
-                          data-tip-pos="top"
-                          data-tip={job.note}
                           aria-label={`下载失败：${job.note}，点击重新下载`}
                           disabled={busy}
                           onClick={() => void download(song)}
@@ -277,17 +271,11 @@ export function SearchPanel({ onPreview }: { onPreview?: (song: GdSong) => void 
                         <button
                           type="button"
                           className="animal-icon-btn"
-                          data-tip-pos="top"
-                          data-tip={
-                            busy
-                              ? "有任务在下载，请稍候"
-                              : `下载 ${song.name}（无损缺货自动降 320K）`
-                          }
                           aria-label={`下载 ${song.name}`}
                           disabled={busy}
                           onClick={() => void download(song)}
                         >
-                          {DOWNLOAD_ICON}
+                          <DownloadIcon size={16} color="currentColor" />
                         </button>
                       )}
                     </span>
@@ -608,6 +596,7 @@ export function PlaylistPanel({
         </button>
       </div>
       <div className="pl-search">
+        <SearchIcon size={15} className="animal-input-icon" />
         <input
           type="text"
           value={filter}
@@ -623,7 +612,7 @@ export function PlaylistPanel({
             aria-label="清除搜索"
             onClick={() => setFilter("")}
           >
-            ✕
+            <CloseIcon size={13} color="currentColor" />
           </button>
         ) : null}
       </div>
@@ -670,7 +659,7 @@ export function PlaylistPanel({
                   void del(track);
                 }}
               >
-                {deletingId === track.id ? "…" : "✕"}
+                {deletingId === track.id ? "…" : <CloseIcon size={13} color="currentColor" />}
               </button>
               <button
                 type="button"
@@ -682,7 +671,7 @@ export function PlaylistPanel({
                   openAdd(track);
                 }}
               >
-                {PLUS_ICON}
+                <PlusIcon size={15} color="currentColor" />
               </button>
             </div>
             {addTarget === track.id ? (
@@ -730,6 +719,10 @@ export function PlaylistPanel({
         );
         })
       )}
+      <BackTop
+        target={() => document.querySelector(".drawer-playlist .animal-drawer-body") as HTMLElement}
+        visibilityHeight={400}
+      />
     </div>
   );
 }
@@ -894,6 +887,7 @@ export function PlaylistsPanel({
   return (
     <div className="plst-panel">
       <div className="plst-new">
+        <FolderIcon size={15} className="animal-input-icon" />
         <input
           type="text"
           value={newName}
@@ -946,7 +940,7 @@ export function PlaylistsPanel({
                       }
                     }}
                   >
-                    ✕
+                    <TrashIcon size={14} color="currentColor" />
                   </span>
                 </span>
               }
@@ -965,7 +959,7 @@ export function PlaylistsPanel({
                       onClick={() => setLoopOpenId((cur) => (cur === pl.id ? null : pl.id))}
                     >
                       <span className="plst-loop-icon">
-                        {loopOpenId === pl.id ? "−" : "+"}
+                        {loopOpenId === pl.id ? <MinusIcon size={11} color="currentColor" /> : <PlusIcon size={11} color="currentColor" />}
                       </span>
                       <span className="plst-loop-current">
                         {LOOP_MODES.find((m) => m.value === (pl.loopMode ?? "list"))?.label ??
@@ -1033,7 +1027,7 @@ export function PlaylistsPanel({
                           aria-label={`从歌单移除 ${song.name}`}
                           onClick={() => removeSong(pl.id, song.id)}
                         >
-                          ✕
+                          <CloseIcon size={13} color="currentColor" />
                         </button>
                       </div>
                     ))

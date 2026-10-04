@@ -144,6 +144,8 @@ export default function KarlSite() {
   const [, setHasQueue] = useState(false);
   /** 正在播放的歌 id（我的歌单里高亮当前行用） */
   const [playingId, setPlayingId] = useState<string | null>(null);
+  /** 已广播过真实时长的歌 id（GD 免签名 API 搜索不带时长，播放后回填） */
+  const durationSentRef = useRef<Set<string>>(new Set());
   /** 设置抽屉展示的当前音乐目录（来自主进程 config.json）。 */
   const [musicDirs, setMusicDirs] = useState<string[]>([]);
   /** 「更改音乐目录」进行中（目录框已弹出 / 内层服务重启中）。 */
@@ -372,6 +374,13 @@ export default function KarlSite() {
   const handleTimeUpdate = () => {
     const audio = activeAudio();
     if (!audio || audio.loop || audio.paused) return;
+    // 真实时长回填：GD 免签名公共 API 的搜索结果不带时长，播放后把
+    // audio.duration 通过事件广播给搜索面板回填该行（每首歌只发一次）
+    if (playingId && Number.isFinite(audio.duration) && audio.duration > 0 && !durationSentRef.current.has(playingId)) {
+      // eslint-disable-next-line react-hooks/immutability -- 事件回调内标记已发送，非渲染期
+      durationSentRef.current.add(playingId);
+      window.dispatchEvent(new CustomEvent("gd-duration", { detail: { id: playingId, duration: Math.round(audio.duration) } }));
+    }
     const q = queueRef.current;
     const remaining = (audio.duration || Infinity) - audio.currentTime;
     // 触发窗口按「计划时长」自适应（长交叉要更早开始），没有计划就退回兜底值
@@ -1179,7 +1188,7 @@ export default function KarlSite() {
   };
 
   return (
-    <div className={`karl-site${fullOpen ? " immersive-on" : ""}`} ref={rootRef}>
+    <div className={`karl-site animal-cursor--force${fullOpen ? " immersive-on" : ""}`} ref={rootRef}>
       <TunnelScene />
       <BalloonScene />
       <SiteFooter />
@@ -1392,6 +1401,7 @@ export default function KarlSite() {
         title="播放列表"
         placement="right"
         width={420}
+        className="drawer-playlist"
         onClose={() => setDrawer(null)}
       >
         <PlaylistPanel

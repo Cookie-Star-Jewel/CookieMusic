@@ -1602,3 +1602,30 @@
   transform: translateX(-50%);
   pointer-events: none;
 }
+
+/* ================================================================
+   输入框前置图标（naive-icons）：三个容器 relative 化 + 图标绝对定位，
+   输入框左 padding 让出图标位。图标 pointer-events:none 不挡输入。
+   ================================================================ */
+.animal-searchbar,
+.plst-new {
+  position: relative;
+}
+
+.animal-searchbar input,
+.plst-new input {
+  padding-left: 40px;
+}
+
+.pl-search input {
+  padding-left: 40px;
+}
+
+.animal-input-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #b3a48c;
+}

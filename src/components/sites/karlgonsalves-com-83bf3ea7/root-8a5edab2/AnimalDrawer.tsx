@@ -2,6 +2,7 @@
 
 import { useEffect, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { CloseIcon } from "naive-icons";
 import "./animal-ui.css";
 
 export type DrawerPlacement = "top" | "right" | "bottom" | "left";
@@ -16,11 +17,13 @@ interface AnimalDrawerProps {
   height?: number;
   /** 点遮罩是否可关闭 */
   maskClosable?: boolean;
-  /** 打开时是否把背景缩放+模糊（景深效果） */
+  /** 打开时是否把背景缩放+模糊（景深效果），默认关闭 */
   pushBackground?: boolean;
   footer?: ReactNode;
   onClose: () => void;
   children: ReactNode;
+  /** 透传到面板根元素的类名 */
+  className?: string;
 }
 
 /**
@@ -38,10 +41,11 @@ export default function AnimalDrawer({
   width = 378,
   height = 300,
   maskClosable = true,
-  pushBackground = true,
+  pushBackground = false,
   footer,
   onClose,
   children,
+  className,
 }: AnimalDrawerProps) {
 // createPortal 只能在客户端跑（SSR 时 document 不存在）：
 // hydration 完成前 mounted=false，之后恒为 true（lint 干净的等价写法）
@@ -95,7 +99,7 @@ const serverMounted = () => false;
         aria-hidden="true"
       />
       <div
-        className={`animal-drawer-panel animal-drawer-${placement}${open ? " animal-drawer-open" : ""}`}
+        className={`animal-drawer-panel animal-drawer-${placement}${open ? " animal-drawer-open" : ""} animal-cursor--force${className ? ` ${className}` : ""}`}
         style={panelStyle}
         role="dialog"
         aria-modal={open}
@@ -105,10 +109,7 @@ const serverMounted = () => false;
         <div className="animal-drawer-header">
           <div className="animal-drawer-title">{title}</div>
           <button type="button" className="animal-drawer-close" aria-label="关闭" onClick={onClose}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <CloseIcon size={15} color="currentColor" />
           </button>
         </div>
         <div className="animal-drawer-body">{children}</div>

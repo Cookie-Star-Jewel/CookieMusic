@@ -2,6 +2,24 @@
 
 所有重要变更记录于此。格式参考 [Keep a Changelog](https://keepachangelog.com/)。
 
+## [0.4.34] - 2026-10
+
+### Added
+
+- **搜索结果真实时长回填**：GD 免签名公共 API 的搜索结果不带时长（0.4.32 起时长列显示「—」的根因）；现试听/播放某首后，把播放器读到的真实时长回填到该行（未播放过的仍显示「—」）。
+- **播放列表抽屉新增 BackTop 回顶部**：列表滚动超过 400px 出现，点击平滑回顶（animal-island-ui BackTop，绑定播放列表抽屉的滚动容器）。
+- **全站手指光标**：主界面与全部抽屉启用 animal-island-ui Cursor（default 手指箭头，覆盖所有后代）。
+- **图标全量换 naive-icons 手绘风**（面板内）：搜索结果播放/下载、曲库行加歌/删除、歌单折叠与循环模式的 +/−、歌单删除与移除、抽屉关闭、清除搜索，共 9 处；三个输入框（搜索歌曲 / 播放列表搜索 / 新建歌单）加前置图标（SearchIcon / SearchIcon / FolderIcon）。dock 与左下角 fab 的自绘 SVG 保留（Ardot 设计稿 1:1 还原区）。
+
+### Fixed
+
+- **关闭抽屉景深效果**：`pushBackground` 默认值改为 false，打开抽屉时背景不再下沉+模糊。
+- **移除搜索结果的悬浮气泡**：播放/下载按钮与下载状态标签上的 data-tip 全部移除（aria-label 保留）。
+
+### Changed
+
+- 清理签名死代码：删除 `gd-signer.ts` 与 `/api/gd/sign` 路由（0.4.32 迁移免签名公共 API 后无调用方），AGENTS.md 与相关注释对齐现状。
+
 ## [0.4.33] - 2026-10
 
 ### Fixed
