@@ -822,7 +822,19 @@ export function PlaylistsPanel({
   const [notice, setNotice] = useState<string | null>(null);
   /** 取直链/歌词中的歌（点播完成后 loadSong 会关抽屉） */
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  /** 真实时长回填：同搜索面板，GD 免签名 API 的歌与本地歌播过后都有真实时长 */
+  const [durations, setDurations] = useState<Record<string, number>>({});
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const onDuration = (event: Event) => {
+      const { id, duration } = (event as CustomEvent<{ id: string; duration: number }>).detail;
+      if (!id || !Number.isFinite(duration) || duration <= 0) return;
+      setDurations((prev) => (prev[id] === duration ? prev : { ...prev, [id]: duration }));
+    };
+    window.addEventListener("gd-duration", onDuration);
+    return () => window.removeEventListener("gd-duration", onDuration);
+  }, []);
 
   const refresh = () => setPlaylists(listPlaylists());
 
@@ -1004,7 +1016,7 @@ export function PlaylistsPanel({
                           {song.name}
                           <span className="plst-song-artist">{song.artist || "未知"}</span>
                         </span>
-                        <span className="plst-song-dur">{fmtDuration(song.duration)}</span>
+                        <span className="plst-song-dur">{fmtDuration(durations[song.id] ?? song.duration)}</span>
                         <button
                           type="button"
                           className="plst-del"
